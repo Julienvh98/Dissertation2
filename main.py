@@ -11,11 +11,24 @@ import plotly.graph_objects as go
 import plotly.express as px
 import plotly.graph_objs as go
 import seaborn as s
+from plotly.subplots import make_subplots
 
-st.title("Comp.Air Dashboard")
 
-st.sidebar.write("Options")
-option = st.sidebar.selectbox("Which Dashboard?", ('Overview', 'Detailed Tables', 'FAQ'),0)
+# SETUP ------------------------------------------------------------------------
+
+# st.title('Comp.Air Dashboard')
+
+st.set_page_config(page_title='Comp.Air Dashboard',
+                   page_icon='/Users/Jujuvh/Desktop/Screenshot 2021-05-13 at 20.44.53.png',
+                   layout="wide")
+
+col1, mid, col2 = st.beta_columns([1,2,20])
+with col1:
+    st.image('/Users/Jujuvh/Desktop/compair.png', width=200)
+with col2:
+    st.title('Comp.Air Dashboard')
+
+option = st.selectbox("Which Dashboard?", ('Overview', 'Detailed Tables', 'FAQ'),0)
 st.header(option)
 
 df = pd.read_excel("Monitors_Combined_Keltbray2.xlsx")
@@ -108,7 +121,13 @@ dfmin = dfmin.drop(index=['Altitude','Longitude','Latitude','Address','Date','Ti
 
 if option == 'Overview':
 
+    #specifying the layout of the page each row is working as a container with spaces. The sizes of the containers and spaces are specified.
+    st.write('')
+
+    row1_1, space1, row1_2, space2, row1_3 = st.beta_columns(2.5,0.1,3,0.1,3)
+
     #TEMPERATURE
+
     temp = dfavg.loc[dfavg.index == 'Temperature']
     temp2 = temp.T
 
@@ -122,6 +141,9 @@ if option == 'Overview':
     )])
 
     templot.update_layout(
+                autosize=False,
+                width=550,
+                height=400,
                 title = "Average Temperature of Various Time Periods",
                 xaxis_title = "Time Periods (Based on current day)",
                 yaxis_title = "Average Temperature in °C ",
@@ -130,29 +152,38 @@ if option == 'Overview':
                     size=14))
     annotations = []
 
-    annotations.append(dict(xref='paper', yref='paper', x=0.5, y=-0.1,
+    annotations.append(dict(xref='paper', yref='paper', x=0.5, y=-0.5,
                             xanchor='center', yanchor='top',
                             text='Comp.Air™',
                             font=dict(family='Arial',
-                                      size=10,
+                                      size=12,
                                       color='rgb(150,150,150)'),
                             showarrow=False))
 
     templot.update_layout(annotations=annotations)
 
-    st.plotly_chart(templot)
+
+    with row1_1:
+        st.plotly_chart(templot)
 
     #HUMIDITY
-    hum = dfavg.loc[dfavg.index == 'Humdity']
-    hum2 = hum.T
-
-    hum2['Time'] = hum2.index
-
-    #AIR PRESSURE
-    air = dfavg.loc[dfavg.index == 'Air Pressure']
-    air2 = air.T
-
-    air2['Time'] = air2.index
+    # hum = dfavg.loc[dfavg.index == 'Humdity']
+    # hum2 = hum.T
+    #
+    # hum2['Time'] = hum2.index
+    #
+    # humplot = go.Figure(data=[go.Bar(
+    #     x=hum2['Time'], y=hum2['Humidity'],
+    #     text=temp2['Humidity'],
+    #     textposition='auto',
+    #     texttemplate="%{y:.2f}",
+    # )])
+    #
+    # #AIR PRESSURE
+    # air = dfavg.loc[dfavg.index == 'Air Pressure']
+    # air2 = air.T
+    #
+    # air2['Time'] = air2.index
 
     #LINEPLOTS
 
@@ -167,7 +198,10 @@ if option == 'Overview':
                     family="Arial",
                     size=14))
 
-    st.plotly_chart(line24)
+    with row1_2:
+        st.plotly_chart(line24)
+
+
 
     line7 = go.Figure(data=go.Scatter(x=day7.index, y=day7['Temperature']))
 
@@ -179,7 +213,8 @@ if option == 'Overview':
             family="Arial",
             size=14))
 
-    st.plotly_chart(line7)
+    with row1_3:
+        st.plotly_chart(line7)
 
 
     #BOX PLOT
@@ -187,10 +222,11 @@ if option == 'Overview':
     fig = px.box(day7 , y="Temperature")
     st.plotly_chart(fig)
 
+
     #Map
 
     map = px.density_mapbox(df, lat='Latitude', lon='Longitude', z='Pm25', radius=10,
-                            center=dict(lat=55, lon=3.4), zoom=120,
+                            center=dict(lat=55, lon=3.4), zoom=60,
                             mapbox_style="stamen-terrain")
 
     st.plotly_chart(map)
