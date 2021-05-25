@@ -60,12 +60,12 @@ def get_data():
                       aws_access_key_id="AKIA3C5IQYEMH7773L7F", \
                       aws_secret_access_key="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")
 
-    response = s3.list_objects(Bucket="compair5c26")
+    response = s3.list_objects(Bucket="allsensorsrecent")
 
     df_list = []
 
     for file in response["Contents"]:
-        obj = s3.get_object(Bucket="compair5c26", Key=file["Key"])
+        obj = s3.get_object(Bucket="allsensorsrecent", Key=file["Key"])
         obj_df = pd.read_csv(obj["Body"])
         df_list.append(obj_df)
 
@@ -73,47 +73,19 @@ def get_data():
 
     return df1
 
+df1 = get_data()
 
-def get_data2():
-    s3 = boto3.client("s3", \
-                      region_name="eu-west-2", \
-                      aws_access_key_id="AKIA3C5IQYEMH7773L7F", \
-                      aws_secret_access_key="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")
+#keeping one copy of the dataframe for the map plot
+df_1 = df1
 
-    response = s3.list_objects(Bucket="allsensorsrecent")
-
-    df2_list = []
-
-    for file in response["Contents"]:
-        obj = s3.get_object(Bucket="allsensorsrecent", Key=file["Key"])
-        obj_df = pd.read_csv(obj["Body"])
-        df2_list.append(obj_df)
-
-    df2 = pd.concat(df2_list)
-
-    return df2
-
-
-df2 = get_data2()
-
-
-# @st.cache(allow_output_mutation=True)
-# def get_data():
-#     data = pd.read_excel("Monitors_Combined_Keltbray2.xlsx")
-#     data = data.drop(["Unnamed: 0", "Timestamp", "Time (UTC)"], axis=1)
-#
-#     return data
-
-df_1 = get_data()
 
 # F9:5A:3E:AE:39:62
-
-#selecting relevant device
-#df_1 = df[df.Address == user_input]
 
 #transforming the strange Date and Time (UTC) formatting
 df_1["Date"] = pd.to_datetime(df_1.Date)
 df_1['Time(min)'] = df_1["Time (UTC)"].astype(str).str[:-3]
+
+df_1 = df_1.drop(["Unnamed: 0", "Timestamp", "Time (UTC)"], axis=1)
 
 #concacetting the Date (in datetimeformat) and the Time(min) into one column
 df_1["Timestamp"] = pd.to_datetime(df_1["Date"].astype(str)+" "+df_1["Time(min)"].astype(str))
@@ -122,44 +94,61 @@ df_1["Timestamp"] = pd.to_datetime(df_1["Date"].astype(str)+" "+df_1["Time(min)"
 df_1 = df_1.set_index("Timestamp")
 df_1.sort_values("Timestamp", inplace=True)
 
+#selecting relevant device
+df_n = df_1[df_1.Address == user_input]
 
 most_recent_date = df_1.index.max()
 
-
-#data from the last hour recorded
-hour1 = df_1[df_1.index>=(most_recent_date-dt.timedelta(hours=1))]
-
 #data from the last 24 hours
-hour24 = df_1[df_1.index>=(most_recent_date-dt.timedelta(hours=24))]
-
-#data from the last 30 days
-day30 = df_1[df_1.index>=(most_recent_date-dt.timedelta(days=30))]
+hour24 = df_n[df_n.index>=(most_recent_date-dt.timedelta(hours=24))]
+hour24_all = df_1[df_1.index>=(most_recent_date-dt.timedelta(hours=24))]
 
 #data from the last 7 days
-day7 = df_1[df_1.index>=(most_recent_date-dt.timedelta(days=7))]
+day7 = df_n[df_n.index>=(most_recent_date-dt.timedelta(days=7))]
+day7_all = df_1[df_1.index>=(most_recent_date-dt.timedelta(days=7))]
+
+#data from the last 30 days
+day30 = df_n[df_n.index>=(most_recent_date-dt.timedelta(days=30))]
+day30_all = df_1[df_1.index>=(most_recent_date-dt.timedelta(days=30))]
 
 #grabbing the average of all timeframes
-m1 = hour1.mean()
 m24 =hour24.mean()
+m24_all = hour24_all.mean()
 mday30 = day30.mean()
+mday30_all = day30_all.mean()
 mday7 = day7.mean()
+mday7_all = day7_all.mean()
 
 #creating a dataframe of all the averages from the different timeframes
-d = {'1 Hour':m1 ,'24 Hours':m24 , '7 Days': mday7, '30 Days': mday30 }
+d = {'24 Hours':m24, '7 Days': mday7, '30 Days': mday30, }
 dfavg = pd.DataFrame(data=d)
+
+# dfavg['Device'] = 'Your Device'
+
+
+d2 = {'24 Hours':m24_all, '7 Days': mday7_all, '30 Days': mday30_all, }
+dfavg2 = pd.DataFrame(data=d2)
+
+# dfavg2['Device'] = 'All Comp.Air Devices'
+
+#
+# st.dataframe(dfavg)
+# st.dataframe(dfavg2)
+
+
+
 
 # rouding decimals to 2 places
 dfavg= dfavg.round(decimals=2)
 
 #removing unnecessary metrics
-dfavg = dfavg.drop(index=['Altitude','Longitude','Latitude'])
+#dfavg = dfavg.drop(index=['Altitude','Longitude','Latitude'])
 
 #calculating the change between past hour and past month
-dif30 = ((m1-mday30)/mday30)
 dif24h = ((m24-mday30)/mday30)
 
 #creating a dataframe of the change in average from the past hour and the past 30 days
-b = {'1 hour change to 30 days':dif30 ,'1 day Change to 30 days': dif24h}
+b = {'1 day Change to 30 days': dif24h}
 dfdif = pd.DataFrame(data=b)
 
 # rouding decimals to 2 places
@@ -171,14 +160,13 @@ dfdif = dfdif.round(decimals=2)
 dfdif = dfdif.drop(index=['Altitude','Longitude','Latitude'])
 
 #grabbing the max of all timeframes
-max1 = hour1.max()
 max24 =hour24.max()
 maxday30 = day30.max()
 maxday7 = day7.max()
 
 
 #creating a dataframe of all the averages from the different timeframes
-d = {'1 Hour':max1 ,'24 Hours':max24 , '7 Days': maxday7, '30 Days': maxday30 }
+d = {'24 Hours':max24 , '7 Days': maxday7, '30 Days': maxday30 }
 dfmax = pd.DataFrame(data=d)
 
 #removing unnecessary metrics
@@ -186,20 +174,14 @@ dfmax = dfmax.drop(index=['Altitude','Longitude','Latitude','Address','Date','Ti
 
 
 #grabbing the min of all timeframes
-min1 = hour1.min()
 min24 =hour24.min()
 minday30 = day30.min()
 minday7 = day7.min()
 
-
-
-d = {'1 Hour':min1 ,'24 Hours':min24 , '7 Days': minday7, '30 Days': minday30 }
+d = {'24 Hours':min24 , '7 Days': minday7, '30 Days': minday30 }
 dfmin = pd.DataFrame(data=d)
 
-
 dfmin = dfmin.drop(index=['Altitude','Longitude','Latitude','Address','Date','Time(min)'])
-
-
 
 if option2 == 'Temperature':
 
@@ -217,6 +199,33 @@ if option2 == 'Temperature':
 
         temp2['Time'] = temp2.index
 
+        temp3 = dfavg2.loc[dfavg.index == 'Temperature']
+        temp4 = temp3.T
+
+        temp4['Time'] = temp4.index
+
+        # df4 = pd.concat([temp2, temp4], axis=1, ignore_index=False)
+        #
+        # df4.columns = ['Your Device','All Comp.Air Devices']
+
+        # st.dataframe(df4)
+
+        compareplot = go.Figure(data=[go.Bar(
+                    name= 'Your Device',
+                    x=temp2['Time'] , y=temp2['Temperature'],
+                    text=temp2['Temperature'],
+                    textposition='auto',
+                    texttemplate="%{y:.2f}°C"
+                ), go.Bar (
+                name = 'All Comp.Air Devices',
+                x=temp4['Time'], y=temp4['Temperature'],
+                text=temp4['Temperature'],
+                textposition='auto',
+                texttemplate="%{y:.2f}°C"
+        )
+            ])
+
+
         templot = go.Figure(data=[go.Bar(
                     x=temp2['Time'] , y=temp2['Temperature'],
                     text=temp2['Temperature'],
@@ -224,10 +233,10 @@ if option2 == 'Temperature':
                     texttemplate="%{y:.2f}°C",
         )])
 
-        templot.update_layout(
+        compareplot.update_layout(
                     autosize=False,
-                    width=550,
-                    height=450,
+                    width=800,
+                    height=520,
                     title = "Average Temperature of Various Time Periods",
                     xaxis_title = "Time Periods (Based on current day)",
                     yaxis_title = "Average Temperature in °C ",
@@ -237,12 +246,38 @@ if option2 == 'Temperature':
         )
 
         with row1_1:
-            st.plotly_chart(templot)
+            st.plotly_chart(compareplot)
+
+
+
+        # with row1_2:
+        #     st.plotly_chart(line24)
+
+
+
+        # line7 = go.Figure(data=go.Scatter(x=day7.index, y=day7['Temperature']))
+        #
+        # line7.update_layout(
+        #     title="Temperature in the Last 7 Days",
+        #     xaxis_title="Time",
+        #     yaxis_title="Temperature in °C ",
+        #     font=dict(
+        #         family="Arial",
+        #         size=14))
+
+        #ROW 2
+        st.write('')
+
+        row2_1, row2_2, = st.beta_columns(2)
+
 
         #LINEPLOTS
         line24 = go.Figure(data=go.Scatter(x=hour24.index, y=hour24['Temperature']))
 
         line24.update_layout(
+                    autosize=False,
+                    width=600,
+                    height=450,
                     title = "Temperature in the Last 24 hours",
                     xaxis_title = "Time",
                     yaxis_title = "Temperature in °C ",
@@ -250,29 +285,12 @@ if option2 == 'Temperature':
                         family="Arial",
                         size=14))
 
-        with row1_2:
-            st.plotly_chart(line24)
-
-
-
-        line7 = go.Figure(data=go.Scatter(x=day7.index, y=day7['Temperature']))
-
-        line7.update_layout(
-            title="Temperature in the Last 7 Days",
-            xaxis_title="Time",
-            yaxis_title="Temperature in °C ",
-            font=dict(
-                family="Arial",
-                size=14))
-
-        #ROW 2
-        st.write('')
-
-        row2_1, row2_2, = st.beta_columns(2)
-
         line30 = go.Figure(data=go.Scatter(x=day30.index, y=day30['Temperature']))
 
         line30.update_layout(
+                autosize=False,
+                width=600,
+                height=450,
                 title="Temperature in the Last 30 Days",
                 xaxis_title="Time",
                 yaxis_title="Temperature in °C ",
@@ -281,38 +299,39 @@ if option2 == 'Temperature':
                     size=14))
 
         with row2_1:
-            st.plotly_chart(line30)
+            st.plotly_chart(line24)
 
-        #BOX PLOT
-
-        box = px.box(day7 , y="Temperature")
-        box.update_layout(
-            autosize=False,
-            width=550,
-            height=450,
-            title="Boxplot of Temperature in the last 7 days",
-            xaxis_title="Time",
-            yaxis_title="Average Temperature in °C ",
-            font=dict(
-                family="Arial",
-                size=14))
 
         with row2_2:
-            st.plotly_chart(box)
+            st.plotly_chart(line30)
 
-
+        #ROW 3
 
         #Map
 
+        st.write('')
+
+        row3_1, row3_2, = st.beta_columns(2)
 
 
-        map = px.density_mapbox(df2, lat='Latitude', lon='Longitude', z='Pm25', radius=10,
-                                center=dict(lat=51.7, lon=-5.9), zoom=3.2,
+
+        map = px.density_mapbox(df1, lat='Latitude', lon='Longitude', z=option2, radius=4,
+                                center=dict(lat=54.5, lon=-4), zoom=4.3,
                                 mapbox_style="stamen-terrain")
 
-        st.plotly_chart(map)
 
-
+        map.update_layout(
+                autosize=False,
+                width=600,
+                height=600,
+                title="Map of Temperature across All Comp.Air Devices",
+                xaxis_title="Time",
+                yaxis_title="Temperature in °C ",
+                font=dict(
+                    family="Arial",
+                    size=14))
+        with row3_1:
+            st.plotly_chart(map)
 
 if option == 'Detailed':
         # @st.cache
@@ -358,25 +377,6 @@ if option == 'Detailed':
 
         row2_1, row2_2 = st.beta_columns(2)
 
-
-    #HUMIDITY
-    # hum = dfavg.loc[dfavg.index == 'Humdity']
-    # hum2 = hum.T
-    #
-    # hum2['Time'] = hum2.index
-    #
-    # humplot = go.Figure(data=[go.Bar(
-    #     x=hum2['Time'], y=hum2['Humidity'],
-    #     text=temp2['Humidity'],
-    #     textposition='auto',
-    #     texttemplate="%{y:.2f}",
-    # )])
-    #
-    # #AIR PRESSURE
-    # air = dfavg.loc[dfavg.index == 'Air Pressure']
-    # air2 = air.T
-    #
-    # air2['Time'] = air2.index
 
 if option == "FAQ":
 
