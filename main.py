@@ -15,7 +15,8 @@ from plotly.subplots import make_subplots
 import boto3
 
 
-# SETUP ------------------------------------------------------------------------
+# SETUP ----------------------------------------------------------------------------------------------------------------
+
 
 #rounding numbers to 2 decimal places
 pd.set_option('precision', 2)
@@ -41,14 +42,12 @@ with col2:
     st.image('/Users/Jujuvh/Desktop/header.png', width=90)
 
 
-# with col1:
-#     st.title('Comp.Air Dashboard')
-# with col2:
-#     st.image('/Users/Jujuvh/Desktop/header.png', width=90)
+# creating beta columns to organise the input functions
+name_cols = st.beta_columns(3)
 
-option2 = st.selectbox("Which Metric?", ('Temperature', 'Humidity', 'Air Pressure'),0)
+option2 = name_cols[0].selectbox("Which Metric?", ('Temperature', 'Humidity', 'Air Pressure'),0)
 
-option = st.selectbox("Which Dashboard?", ('Overview', 'Detailed',  'FAQ'),0)
+option = name_cols[1].selectbox("Which Dashboard?", ('Overview','Comparison', 'Detailed',  'FAQ'),0)
 
 # id = acess_key_id
 #
@@ -56,33 +55,37 @@ option = st.selectbox("Which Dashboard?", ('Overview', 'Detailed',  'FAQ'),0)
 
 #allsensorsrecent
 
-user_input = st.text_input('Input your device name here:')
-user_input2 = st.text_input('Input additional device name here:')
+# name_cols2 = st.beta_columns(2)
 
-if option == "Overview":
-    st.header(option2 + " " + option)
+user_input = name_cols[2].text_input('Input your device name here:')
 
-if option == 'Detailed':
-    st.header(option2 + " " + option)
+#adjusting the padding of the dashboard to enhance the use of space
+padding = 3
+st.markdown(f""" <style>
+    .reportview-container .main .block-container{{
+        padding-top: {padding}rem;
+        padding-right: {padding}rem;
+        padding-left: {padding}rem;
+        padding-bottom: {padding}rem;
+    }} </style> """, unsafe_allow_html=True)
 
-if option == "FAQ":
-    st.header(option)
-
-
+# GETTING DATA --------------------------------------------------------------------------------------------------------
 
 if user_input != "":
+
+#caching the data, will only run the function if it has not been run before
     def get_data():
         s3 = boto3.client("s3", \
                           region_name="eu-west-2", \
                           aws_access_key_id="AKIA3C5IQYEMH7773L7F", \
                           aws_secret_access_key="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")
 
-        response = s3.list_objects(Bucket=user_input)
+        response = s3.list_objects(Bucket= user_input)
 
         df_list = []
 
         for file in response["Contents"]:
-            obj = s3.get_object(Bucket=user_input, Key=file["Key"])
+            obj = s3.get_object(Bucket= user_input, Key=file["Key"])
             obj_df = pd.read_csv(obj["Body"])
             df_list.append(obj_df)
 
@@ -92,30 +95,9 @@ if user_input != "":
 
     df_n = get_data()
 
-    #getting the data for the additional device
-
-    def get_data2():
-        s3 = boto3.client("s3", \
-                          region_name="eu-west-2", \
-                          aws_access_key_id="AKIA3C5IQYEMH7773L7F", \
-                          aws_secret_access_key="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")
-
-        response = s3.list_objects(Bucket=user_input2)
-
-        df_list = []
-
-        for file in response["Contents"]:
-            obj = s3.get_object(Bucket=user_input2, Key=file["Key"])
-            obj_df = pd.read_csv(obj["Body"])
-            df_list.append(obj_df)
-
-        df_n2 = pd.concat(df_list)
-
-        return df_n2
-
-    df_n2 = get_data2()
 
     # getting the data for the all comp.air device's
+
     def get_data_all():
         s3 = boto3.client("s3", \
                           region_name="eu-west-2", \
@@ -124,25 +106,56 @@ if user_input != "":
 
         response = s3.list_objects(Bucket='allsensorsrecent')
 
-        df_list = []
+        df_list_all = []
 
         for file in response["Contents"]:
             obj = s3.get_object(Bucket='allsensorsrecent', Key=file["Key"])
             obj_df = pd.read_csv(obj["Body"])
-            df_list.append(obj_df)
+            df_list_all.append(obj_df)
 
-        df_1 = pd.concat(df_list)
+        df_1 = pd.concat(df_list_all)
 
         return df_1
 
     df_1 = get_data_all()
 
+# CREATING AIR MEASURED COUNTER ----------------------------------------------------------------------------------------
+
+    count = len(df_1.index)
+
+    scount = '{:,}'.format(count)
+
+    row1_1,space, row1_2 = st.beta_columns((0.05, 0.05, 2))
+
+    with row1_1:
+        st.image('/Users/Jujuvh/Desktop/air.png', width=50)
+
+    with row1_2:
+        st.markdown('### # of Comp.Air samples in the last month: ' + scount)
 
 
-    # F9:5A:3E:AE:39:62
+# CREATING INPUT BOXES FOR DIFFERENT DASHBOARDS ------------------------------------------------------------------------
+
+    if option == "Overview":
+        st.header(option2 + " " + option)
+
+    if option == "Comparison":
+        st.header(option2 + " " + option)
+
+    if option == 'Detailed':
+        st.header(option2 + " " + option)
+
+    if option == "FAQ":
+        st.header(option)
+
+# CLEANING DATA --------------------------------------------------------------------------------------------------------
 
     #transforming the strange Date and Time (UTC) formatting
 
+    @st.cache
+    #caching the cleaning process to speed up the cleaning process,
+    # getting the data was not cached because when cached streamlit
+    # detects that an object returned by the get_data function is mutated outside of the get_data function.
     def clean(dataf):
         dataf["Date"] = pd.to_datetime(dataf.Date)
         dataf['Time(min)'] = dataf["Time (UTC)"].astype(str).str[:-3]
@@ -160,8 +173,9 @@ if user_input != "":
 
     #applying the function to all three datasets
     df_n = clean(df_n)
-    df_n2 = clean(df_n2)
     df_1 = clean(df_1)
+
+# TIMEFRAME DATAFRAME TRANSFORMATION -----------------------------------------------------------------------------------
 
     most_recent_date = df_n.index.max()
 
@@ -190,7 +204,6 @@ if user_input != "":
     dfavg = pd.DataFrame(data=d)
 
     # dfavg['Device'] = 'Your Device'
-
 
     d2 = {'24 Hours':m24_all, '7 Days': mday7_all, '30 Days': mday30_all, }
     dfavg2 = pd.DataFrame(data=d2)
@@ -239,6 +252,8 @@ if user_input != "":
     dfmin = pd.DataFrame(data=d)
 
     dfmin = dfmin.drop(index=['Altitude','Longitude','Latitude','Address','Date','Time(min)'])
+
+# TEMPERATUR DASHBOARD -------------------------------------------------------------------------------------------------
 
     if option2 == 'Temperature':
 
@@ -307,22 +322,7 @@ if user_input != "":
             with row1_1:
                 st.plotly_chart(compareplot)
 
-
-
             # with row1_2:
-            #     st.plotly_chart(line24)
-
-
-
-            # line7 = go.Figure(data=go.Scatter(x=day7.index, y=day7['Temperature']))
-            #
-            # line7.update_layout(
-            #     title="Temperature in the Last 7 Days",
-            #     xaxis_title="Time",
-            #     yaxis_title="Temperature in °C ",
-            #     font=dict(
-            #         family="Arial",
-            #         size=14))
 
             #ROW 2
             st.write('')
@@ -331,9 +331,6 @@ if user_input != "":
 
 
             #LINEPLOTS
-
-
-
             line24 = go.Figure(data=go.Scatter(x=hour24.index, y=hour24['Temperature']))
 
             line24.update_layout(
@@ -375,41 +372,87 @@ if user_input != "":
 
             row3_1, row3_2, = st.beta_columns(2)
 
-
-
-            map = px.density_mapbox(df1, lat='Latitude', lon='Longitude', z=option2, radius=4,
+            map = px.density_mapbox(df_1, lat='Latitude', lon='Longitude', z=option2, radius=4,
                                     center=dict(lat=54.5, lon=-4), zoom=4.3,
                                     mapbox_style="stamen-terrain")
-
 
             map.update_layout(
                     autosize=False,
                     width=600,
                     height=600,
-                    title="Map of Temperature across All Comp.Air Devices",
+                    title="Map of " + option2 + " °C Across All Comp.Air Devices",
                     xaxis_title="Time",
-                    yaxis_title="Temperature in °C ",
+                    yaxis_title= option2,
                     font=dict(
                         family="Arial",
                         size=14))
             with row3_1:
                 st.plotly_chart(map)
 
-    if option == 'Comparison of 2 devices':
+        if option == 'Comparison':
 
-        compareline = go.Figure(data=[go.Scatter(
-            name='Your Device',
-            x=day7.index, y=day7['Temperature'],
-            marker_color='crimson'
-        ), go.Bar(
-            name='All Comp.Air Devices',
-            x=day7['Time'], y=temp4['Temperature'],
-            marker_color='darkblue',
-            text=temp4['Temperature'],
-            textposition='auto',
-            texttemplate="%{y:.2f}°C"
-        )
-        ])
+            user_input2 = st.text_input('Input additional device name here:')
+
+            # getting the data for the additional device if the input is not blank (makes sure no error is displayed)
+            if user_input2 != "":
+                def get_data2():
+                    s3 = boto3.client("s3", \
+                                      region_name="eu-west-2", \
+                                      aws_access_key_id="AKIA3C5IQYEMH7773L7F", \
+                                      aws_secret_access_key="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")
+
+                    response = s3.list_objects(Bucket=user_input2)
+
+                    df_list2 = []
+
+                    for file in response["Contents"]:
+                        obj = s3.get_object(Bucket=user_input2, Key=file["Key"])
+                        obj_df = pd.read_csv(obj["Body"])
+                        df_list2.append(obj_df)
+
+                    df_n2 = pd.concat(df_list2)
+
+                    return df_n2
+
+                df_n2 = get_data2()
+
+                df_n2 = clean(df_n2)
+
+                # day7_2 = df_n2[df_n2.index >= (most_recent_date - dt.timedelta(days=7))]
+
+                day30_2 = df_n2[df_n2.index >= (most_recent_date - dt.timedelta(days=30))]
+
+                compareline = go.Figure(data=[go.Scatter(
+                    name= user_input ,
+                    x=day30.index, y=day30['Temperature'],
+                    marker_color='crimson'
+                ), go.Scatter(
+                    name= user_input2,
+                    x=day30_2.index, y=day30_2['Temperature'],
+                    marker_color='darkblue',
+                )
+                ])
+
+                compareline.update_layout(
+                    autosize=False,
+                    width=800,
+                    height=520,
+                    title="Comparing Temperature of " + user_input + " and " + user_input2,
+                    xaxis_title="Time",
+                    yaxis_title="Temperature in °C ",
+                    font=dict(
+                        family="Arial",
+                        size=14)
+                )
+
+                #plotting the compare line graph (needs to indent to active the if statement)
+                st.write('')
+
+                row1_1, row1_2 = st.beta_columns(2)
+
+                with row1_1:
+                    st.plotly_chart(compareline)
+
 
     if option == 'Detailed':
             # @st.cache
