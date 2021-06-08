@@ -13,17 +13,20 @@ import plotly.graph_objs as go
 import seaborn as s
 from plotly.subplots import make_subplots
 import boto3
+from botocore.exceptions import ClientError
+import io
+import scipy
+
+from scipy import signal
 
 
 # SETUP ----------------------------------------------------------------------------------------------------------------
-
 
 #rounding numbers to 2 decimal places
 pd.set_option('precision', 2)
 
 #limiting the format to 2 decimal places to make it easier to read for the user
 pd.options.display.float_format = "{:.2f}".format
-
 
 #uploading logo images that will be used
 
@@ -33,8 +36,6 @@ st.set_page_config(page_title='Comp.Air Dashboard',
                    page_icon='/Users/Jujuvh/Desktop/icon3.png',
                    layout="wide")
 
-
-
 col1, mid, col2 = st.beta_columns([10,6,20])
 with col1:
     st.title('Comp.Air Dashboard')
@@ -42,12 +43,13 @@ with col2:
     st.image('/Users/Jujuvh/Desktop/header.png', width=90)
 
 
+
 # creating beta columns to organise the input functions
 name_cols = st.beta_columns(3)
 
-option2 = name_cols[0].selectbox("Which Metric?", ('Temperature', 'Humidity', 'Air Pressure'),0)
+option2 = name_cols[0].selectbox("Which Metric?", ('Temperature', 'Humidity', 'Air Pressure', 'PM2.5'),0)
 
-option = name_cols[1].selectbox("Which Dashboard?", ('Overview','Comparison', 'Detailed',  'FAQ'),0)
+option = name_cols[1].selectbox("Which Dashboard?", ('Overview','Comparison',  'FAQ'),0)
 
 # id = acess_key_id
 #
@@ -85,9 +87,24 @@ if user_input != "":
         df_list = []
 
         for file in response["Contents"]:
-            obj = s3.get_object(Bucket= user_input, Key=file["Key"])
-            obj_df = pd.read_csv(obj["Body"])
-            df_list.append(obj_df)
+
+# error handling to check if any files are missing from the bucket (it will ignore missing files)
+#             try:
+#                 obj = s3.get_object(Bucket= user_input, Key=file["Key"])
+#                 obj_read = obj["Body"].read()
+#                 obj_df = pd.read_csv(io.BytesIO(obj_read))
+#                 df_list.append(obj_df)
+#
+#             except ClientError as ex:
+#                 if ex.response['Error']['Code'] == 'NoSuchKey':
+#                     pass
+#                 else:
+#                     raise
+
+                obj = s3.get_object(Bucket= user_input, Key=file["Key"])
+                obj_df = pd.read_csv(obj["Body"])
+                df_list.append(obj_df)
+
 
         df_n = pd.concat(df_list)
 
@@ -124,14 +141,15 @@ if user_input != "":
     count = len(df_1.index)
 
     scount = '{:,}'.format(count)
-
-    row1_1,space, row1_2 = st.beta_columns((0.05, 0.05, 2))
-
-    with row1_1:
-        st.image('/Users/Jujuvh/Desktop/air.png', width=50)
-
-    with row1_2:
-        st.markdown('### # of Comp.Air samples in the last month: ' + scount)
+    #
+    # row1_1,space, row1_2 = st.beta_columns((0.05, 0.05, 2))
+    #
+    # with row1_1:
+    #     st.image('/Users/Jujuvh/Desktop/air.png', width=35)
+    #
+    # with row1_2:
+    #     st.markdown('#### # of Comp.Air samples'
+    #                 ' in the last month: ' + scount)
 
 
 # CREATING INPUT BOXES FOR DIFFERENT DASHBOARDS ------------------------------------------------------------------------
@@ -140,9 +158,6 @@ if user_input != "":
         st.header(option2 + " " + option)
 
     if option == "Comparison":
-        st.header(option2 + " " + option)
-
-    if option == 'Detailed':
         st.header(option2 + " " + option)
 
     if option == "FAQ":
@@ -158,22 +173,33 @@ if user_input != "":
     # detects that an object returned by the get_data function is mutated outside of the get_data function.
     def clean(dataf):
         dataf["Date"] = pd.to_datetime(dataf.Date)
+        dataf["Date"] = dataf["Date"].astype(str).str[0:10]
         dataf['Time(min)'] = dataf["Time (UTC)"].astype(str).str[:-3]
 
         dataf = dataf.drop(["Unnamed: 0", "Timestamp", "Time (UTC)"], axis=1)
 
         #concacetting the Date (in datetimeformat) and the Time(min) into one column
         dataf["Timestamp"] = pd.to_datetime(dataf["Date"].astype(str)+" "+dataf["Time(min)"].astype(str))
+        # dataf["hour"] = dataf["Timestamp"].dt.hour #new
+        # dataf['Time'] = pd.to_datetime(dataf["Date"].astype(str)+" "+dataf["hour"].astype(str)) #new
+        dataf["Timstamp2"]  = pd.to_datetime(dataf)
 
         #setting this new column as the index
         dataf = dataf.set_index("Timestamp")
         dataf.sort_values("Timestamp", inplace=True)
 
+
+        dataf.rename(columns={'Pm25': 'PM2.5', 'Pm1': 'PM1','Pm10': 'PM10' }, inplace=True)
+
         return dataf
+
+        #renaming certain columns
 
     #applying the function to all three datasets
     df_n = clean(df_n)
     df_1 = clean(df_1)
+
+    st.dataframe(df_n)
 
 # TIMEFRAME DATAFRAME TRANSFORMATION -----------------------------------------------------------------------------------
 
@@ -253,16 +279,30 @@ if user_input != "":
 
     dfmin = dfmin.drop(index=['Altitude','Longitude','Latitude','Address','Date','Time(min)'])
 
-# TEMPERATUR DASHBOARD -------------------------------------------------------------------------------------------------
+# TEMPERATURE DASHBOARD -------------------------------------------------------------------------------------------------
 
     if option2 == 'Temperature':
 
         if option == 'Overview':
 
+            st.write('')
+
+            row1_1,space, row1_2, row1_3 = st.beta_columns((1.5,1,0.2,1))
+
+            with row1_1:
+                st.markdown(''':books: * Definition *: temperature measured in degree Celcius °C.''')
+
+            with row1_2:
+                st.image('/Users/Jujuvh/Desktop/air.png', width=35)
+
+            with row1_3:
+                st.markdown('''Comp.Air samples taken in the last month: ''' + scount)
+
+
             #specifying the layout of the page each row is working as a container with spaces. The sizes of the containers and spaces are specified.
             st.write('')
 
-            row1_1, row1_2 = st.beta_columns(2)
+            row1_1, row1_2, row1_3 = st.beta_columns((0.75,3,0.75))
 
             #TEMPERATURE
 
@@ -309,7 +349,7 @@ if user_input != "":
 
             compareplot.update_layout(
                         autosize=False,
-                        width=800,
+                        width=850,
                         height=520,
                         title = "Average Temperature of Various Time Periods",
                         xaxis_title = "Time Periods (Based on current day)",
@@ -319,8 +359,16 @@ if user_input != "":
                             size=14)
             )
 
-            with row1_1:
+            with row1_2:
                 st.plotly_chart(compareplot)
+
+            # with row1_2:
+            #     st.image('/Users/Jujuvh/Desktop/air.png', width=35)
+            #
+            # with row1_3:
+            #     st.markdown('#### # of Comp.Air samples'
+            #                 ' in the last month: ' + scount)
+
 
             # with row1_2:
 
@@ -344,6 +392,8 @@ if user_input != "":
                             family="Arial",
                             size=14))
 
+
+
             line30 = go.Figure(data=go.Scatter(x=day30.index, y=day30['Temperature']))
 
             line30.update_layout(
@@ -356,6 +406,7 @@ if user_input != "":
                     font=dict(
                         family="Arial",
                         size=14))
+
 
             with row2_1:
                 st.plotly_chart(line24)
@@ -370,7 +421,7 @@ if user_input != "":
 
             st.write('')
 
-            row3_1, row3_2, = st.beta_columns(2)
+            space1, row3_1, space2 = st.beta_columns((0.5,3,0.75))
 
             map = px.density_mapbox(df_1, lat='Latitude', lon='Longitude', z=option2, radius=4,
                                     center=dict(lat=54.5, lon=-4), zoom=4.3,
@@ -378,7 +429,7 @@ if user_input != "":
 
             map.update_layout(
                     autosize=False,
-                    width=600,
+                    width=850,
                     height=600,
                     title="Map of " + option2 + " °C Across All Comp.Air Devices",
                     xaxis_title="Time",
@@ -453,51 +504,229 @@ if user_input != "":
                 with row1_1:
                     st.plotly_chart(compareline)
 
+# PM2.5 DASHBOARD -------------------------------------------------------------------------------------------------
 
-    if option == 'Detailed':
-            # @st.cache
-            # def detailed()
+    if option2 == 'PM2.5':
 
-            all = go.Figure(data=go.Scatter(x=df_1.index, y=df_1['Temperature']))
+        if option == 'Overview':
 
-            all.update_layout(
-                    title="Temperature Recorded Since Device Activation",
+            st.write('')
+
+            row1_1,space, row1_2, row1_3 = st.beta_columns((1.5,1,0.2,1))
+
+            with row1_1:
+                st.markdown(''':books: * Definition *: atmospheric particulate matter (PM) that have a diameter of less than 2.5 micrometers (μm) .''')
+
+            with row1_2:
+                st.image('/Users/Jujuvh/Desktop/air.png', width=35)
+
+            with row1_3:
+                st.markdown('''Comp.Air samples taken in the last month: ''' + scount)
+
+
+            #specifying the layout of the page each row is working as a container with spaces. The sizes of the containers and spaces are specified.
+            st.write('')
+
+            row1_1, row1_2, row1_3 = st.beta_columns((0.75,3,0.75))
+
+            temp = dfavg.loc[dfavg.index == 'PM2.5']
+            temp2 = temp.T
+
+            temp2['Time'] = temp2.index
+
+            temp3 = dfavg2.loc[dfavg2.index == 'PM2.5']
+            temp4 = temp3.T
+
+            temp4['Time'] = temp4.index
+
+            compareplot = go.Figure(data=[go.Bar(
+                        name= user_input,
+                        x=temp2['Time'] , y=temp2['PM2.5'],
+                        marker_color='crimson',
+                        text=temp2['PM2.5'],
+                        textposition='auto',
+                        texttemplate="%{y:.2f} μm"
+                    ), go.Bar (
+                    name = 'All Comp.Air Devices',
+                    x=temp4['Time'], y=temp4['PM2.5'],
+                    marker_color='darkblue',
+                    text=temp4['PM2.5'],
+                    textposition='auto',
+                    texttemplate="%{y:.2f} μm"
+            )
+                ])
+
+
+            templot = go.Figure(data=[go.Bar(
+                        x=temp2['Time'] , y=temp2['PM2.5'],
+                        text=temp2['PM2.5'],
+                        textposition='auto',
+                        texttemplate="%{y:.2f} μm",
+            )])
+
+            compareplot.update_layout(
+                        autosize=False,
+                        width=850,
+                        height=520,
+                        title = "Average PM2.5 of Various Time Periods",
+                        xaxis_title = "Time Periods (Based on current day)",
+                        yaxis_title = "Average PM2.5 μm ",
+                        font=dict(
+                            family="Arial",
+                            size=14)
+            )
+
+            with row1_2:
+                st.plotly_chart(compareplot)
+
+            #ROW 2
+            st.write('')
+
+            row2_1, row2_2, = st.beta_columns(2)
+
+
+            #LINEPLOTS
+            line24 = go.Figure(data=go.Scatter(x=hour24.index, y=hour24['PM2.5'], name = user_input))
+
+            line24.update_layout(
+                        autosize=False,
+                        width=600,
+                        height=450,
+                        title = "PM2.5 in the Last 24 hours",
+                        xaxis_title = "Time",
+                        yaxis_title = "PM2.5 μm ",
+                        yaxis_range=[0, 20], #setting the y-axis range
+                        font=dict(
+                            family="Arial",
+                            size=14))
+
+            line24.add_trace(go.Scatter(
+                x=hour24.index,
+                y=signal.savgol_filter(hour24['PM2.5'],
+                                       45,  # window size used for filtering
+                                       3),  # order of fitted polynomial
+
+                name='SG Smoothing'
+            ))
+
+            line30 = go.Figure(data=go.Scatter(x=day30.index, y=day30['PM2.5'], name = user_input))
+
+            line30.update_layout(
+                    autosize=False,
+                    width=600,
+                    height=450,
+                    title="PM2.5 in the Last 30 Days",
                     xaxis_title="Time",
-                    yaxis_title="Temperature in °C ",
+                    yaxis_title="PM2.5 μm ",
+                    yaxis_range=[0, 20],
                     font=dict(
                         family="Arial",
                         size=14))
 
-            st.plotly_chart(all)
+            line30.add_trace(go.Scatter(
+                x=day30.index,
+                y=signal.savgol_filter(day30['PM2.5'],
+                                       141,  # window size used for filtering
+                                       3), # order of fitted polynomial
 
-            # st.write(df.style.format("{:.2}"))
-            st.write('')
-
-            row2_1, row2_2 = st.beta_columns(2)
+                name='SG Smoothing'
+            ))
 
             with row2_1:
-                st.header("Average")
-                st.dataframe(dfavg)
+                st.plotly_chart(line24)
+
 
             with row2_2:
-                st.header("% Change")
-                st.dataframe(dfdif)
+                st.plotly_chart(line30)
 
-            #add rows
+            #ROW 3
+
+            #Map
+
             st.write('')
 
-            row3_1, row3_2 = st.beta_columns(2)
+            space1, row3_1, space2 = st.beta_columns((0.5,3,0.75))
 
+            map = px.density_mapbox(df_1, lat='Latitude', lon='Longitude', z=option2, radius=4,
+                                    center=dict(lat=54.5, lon=-4), zoom=4.3,
+                                    mapbox_style="stamen-terrain")
+
+            map.update_layout(
+                    autosize=False,
+                    width=850,
+                    height=600,
+                    title="Map of " + option2 + " Across All Comp.Air Devices",
+                    xaxis_title="Time",
+                    yaxis_title= option2,
+                    font=dict(
+                        family="Arial",
+                        size=14))
             with row3_1:
-                st.header("Maximum")
-                st.dataframe(dfmax)
+                st.plotly_chart(map)
 
-            with row3_2:
-                st.header("Minimum")
-                st.dataframe(dfmin)
+        if option == 'Comparison':
 
-            row2_1, row2_2 = st.beta_columns(2)
+            user_input2 = st.text_input('Input additional device name here:')
 
+            # getting the data for the additional device if the input is not blank (makes sure no error is displayed)
+            if user_input2 != "":
+                def get_data2():
+                    s3 = boto3.client("s3", \
+                                      region_name="eu-west-2", \
+                                      aws_access_key_id="AKIA3C5IQYEMH7773L7F", \
+                                      aws_secret_access_key="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")
+
+                    response = s3.list_objects(Bucket=user_input2)
+
+                    df_list2 = []
+
+                    for file in response["Contents"]:
+                        obj = s3.get_object(Bucket=user_input2, Key=file["Key"])
+                        obj_df = pd.read_csv(obj["Body"])
+                        df_list2.append(obj_df)
+
+                    df_n2 = pd.concat(df_list2)
+
+                    return df_n2
+
+                df_n2 = get_data2()
+
+                df_n2 = clean(df_n2)
+
+                # day7_2 = df_n2[df_n2.index >= (most_recent_date - dt.timedelta(days=7))]
+
+                day30_2 = df_n2[df_n2.index >= (most_recent_date - dt.timedelta(days=30))]
+
+                compareline = go.Figure(data=[go.Scatter(
+                    name= user_input ,
+                    x=day30.index, y=day30['PM2.5'],
+                    marker_color='crimson'
+                ), go.Scatter(
+                    name= user_input2,
+                    x=day30_2.index, y=day30_2['PM2.5'],
+                    marker_color='darkblue',
+                )
+                ])
+
+                compareline.update_layout(
+                    autosize=False,
+                    width=800,
+                    height=520,
+                    title="Comparing PM2.5 of " + user_input + " and " + user_input2,
+                    xaxis_title="Time",
+                    yaxis_title="PM2.5 μm ",
+                    font=dict(
+                        family="Arial",
+                        size=14)
+                )
+
+                #plotting the compare line graph (needs to indent to active the if statement)
+                st.write('')
+
+                row1_1, row1_2 = st.beta_columns(2)
+
+                with row1_1:
+                    st.plotly_chart(compareline)
 
 if option == "FAQ":
 
@@ -531,5 +760,34 @@ if option == "FAQ":
         The data is collected and used only for the purpose of analysis for its users. You are protected under GDPR law.
 
         '''
+
+    st.markdown('___')
+    about = st.beta_expander('What is SG Smoothing ?')
+    with about:
+        '''
+
+        The data is collected and used only for the purpose of analysis for its users. You are protected under GDPR law.
+
+        '''
+
+    st.markdown('___')
+    about = st.beta_expander('What are the stress levels and recommended operating conditions for the Comp.Air Device?')
+    with about:
+        '''
+        **Recommended Operating Conditions**
+        
+        The sensor shows best performance when operated within recommended normal temperature and humidity range of 10 to 40 °C and 20 to 80 % RH, respectively.
+        
+        
+        **Stress Levels**
+        
+        Operating temperature range: -10 to 60°C
+        
+        Operating humdity range: 0 to 95 % RH
+        
+        Supply voltage VDD: -0.3 to 5.5 V
+        
+        '''
+
 
 
