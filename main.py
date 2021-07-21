@@ -112,6 +112,7 @@ if user_input != "":
 
     # getting the data for the all comp.air device's
 
+    @st.cache
     def get_data_all():
         s3 = boto3.client("s3", \
                           region_name="eu-west-2", \
@@ -149,7 +150,6 @@ if user_input != "":
 
 # CLEANING DATA --------------------------------------------------------------------------------------------------------
 
-
     @st.cache
     #caching the cleaning process to speed up the cleaning process,
     # getting the data was not cached because when cached streamlit
@@ -186,41 +186,48 @@ if user_input != "":
 
 # DATAFRAME TRANSFORMATION -----------------------------------------------------------------------------------
 
-    # changing from a frequency of data point per minute to the hourly average to enhance the user experience in the lineplots (individual devices only as there are no aggregate line plots)
-    df_n = df_n.groupby([df_n.index.values.astype('<M8[h]')]).mean()
+    df_nu = df_n.groupby([df_n.index.values.astype('<M8[h]')]).mean()
 
-    most_recent_date = df_n.index.max()
+    most_recent_date = df_nu.index.max()
 
-    #data from the last 24 hours
-    hour24 = df_n[df_n.index>=(most_recent_date-dt.timedelta(hours=24))]
-    hour24_all = df_1[df_1.index>=(most_recent_date-dt.timedelta(hours=24))]
+    @st.cache
+    def transform():
+        # changing from a frequency of data point per minute to the hourly average to enhance the user experience in the lineplots (individual devices only as there are no aggregate line plots)
 
-    #data from the last 7 days
-    day7 = df_n[df_n.index>=(most_recent_date-dt.timedelta(days=7))]
-    day7_all = df_1[df_1.index>=(most_recent_date-dt.timedelta(days=7))]
+        #data from the last 24 hours
+        hour24 = df_nu[df_nu.index>=(most_recent_date-dt.timedelta(hours=24))]
+        hour24_all = df_1[df_1.index>=(most_recent_date-dt.timedelta(hours=24))]
 
-    #data from the last 30 days
-    day30 = df_n[df_n.index>=(most_recent_date-dt.timedelta(days=30))]
-    day30_all = df_1[df_1.index>=(most_recent_date-dt.timedelta(days=30))]
+        #data from the last 7 days
+        day7 = df_nu[df_nu.index>=(most_recent_date-dt.timedelta(days=7))]
+        day7_all = df_1[df_1.index>=(most_recent_date-dt.timedelta(days=7))]
 
-    #grabbing the average of all timeframes
-    m24 =hour24.mean()
-    m24_all = hour24_all.mean()
-    mday30 = day30.mean()
-    mday30_all = day30_all.mean()
-    mday7 = day7.mean()
-    mday7_all = day7_all.mean()
+        #data from the last 30 days
+        day30 = df_nu[df_nu.index>=(most_recent_date-dt.timedelta(days=30))]
+        day30_all = df_1[df_1.index>=(most_recent_date-dt.timedelta(days=30))]
 
-    #creating a dataframe of all the averages from the different timeframes
-    d = {'24 Hours':m24, '7 Days': mday7, '30 Days': mday30, }
-    dfavg = pd.DataFrame(data=d)
+        #grabbing the average of all timeframes
+        m24 =hour24.mean()
+        m24_all = hour24_all.mean()
+        mday30 = day30.mean()
+        mday30_all = day30_all.mean()
+        mday7 = day7.mean()
+        mday7_all = day7_all.mean()
 
-    all = {'24 Hours':m24_all, '7 Days': mday7_all, '30 Days': mday30_all, }
-    dfavg2 = pd.DataFrame(data=all)
+        #creating a dataframe of all the averages from the different timeframes
+        d = {'24 Hours':m24, '7 Days': mday7, '30 Days': mday30, }
+        dfavg = pd.DataFrame(data=d)
 
-    # rouding decimals to 2 places
-    dfavg= dfavg.round(decimals=2)
-    dfavg2 = dfavg2.round(decimals=2)
+        all = {'24 Hours':m24_all, '7 Days': mday7_all, '30 Days': mday30_all, }
+        dfavg2 = pd.DataFrame(data=all)
+
+        # rouding decimals to 2 places
+        dfavg= dfavg.round(decimals=2)
+        dfavg2 = dfavg2.round(decimals=2)
+
+        return dfavg, dfavg2, day30, day30_all
+
+    dfavg, dfavg2, day30, day30_all = transform()
 
 # Air Pressure DASHBOARD -------------------------------------------------------------------------------------------------
 
@@ -370,7 +377,7 @@ if user_input != "":
 
             name_cols = st.beta_columns(5)
 
-            number = name_cols[0].selectbox("How many Devices?", ('2', '3', '4','5'), 0)
+            number = name_cols[0].selectbox("How many Devices?", ('2', '3', '4','5'), 3)
 
             user_input2 = name_cols[1].text_input('Input additional device name here:')
 
@@ -427,6 +434,25 @@ if user_input != "":
                             marker_color='darkblue',
                         )])
 
+                    compareline.update_layout(
+                        autosize=False,
+                        width=800,
+                        height=520,
+                        title="Comparing Air Pressure" ,
+                        xaxis_title="Time",
+                        yaxis_title="Air Pressure in hPa ",
+                        font=dict(
+                            family="Arial",
+                            size=14)
+                    )
+
+                    st.write('')
+
+                    row1_1, row1_2, row1_3 = st.beta_columns((0.75, 3, 0.75))
+
+                    with row1_2:
+                        st.plotly_chart(compareline)
+
             if number == '3':
                 if user_input3 != "":
                     def get_data2():
@@ -456,6 +482,7 @@ if user_input != "":
                     df_n2 = df_n2.groupby([df_n2.index.values.astype('<M8[h]')]).mean()
 
                     day30_2 = df_n2[df_n2.index >= (most_recent_date - dt.timedelta(days=30))]
+
 
                     def get_data3():
                         s3 = boto3.client("s3", \
@@ -499,111 +526,29 @@ if user_input != "":
                         marker_color='darkslategrey'
                         )])
 
+                    compareline.update_layout(
+                        autosize=False,
+                        width=800,
+                        height=520,
+                        title="Comparing Air Pressure of " + user_input + " and " + user_input2,
+                        xaxis_title="Time",
+                        yaxis_title="Air Pressure in hPa ",
+                        font=dict(
+                            family="Arial",
+                            size=14)
+                    )
+
+                    st.write('')
+
+
+                    row1_1, row1_2, row1_3 = st.beta_columns((0.75, 3, 0.75))
+
+                    with row1_2:
+                        st.plotly_chart(compareline)
+
+
             if number == '4':
                 if user_input4 != "":
-                    def get_data4():
-                        s3 = boto3.client("s3", \
-                                          region_name="eu-west-2", \
-                                          aws_access_key_id="AKIA3C5IQYEMH7773L7F", \
-                                          aws_secret_access_key="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")
-
-                        response = s3.list_objects(Bucket=user_input2)
-
-                        df_list2 = []
-
-                        for file in response["Contents"]:
-                            obj = s3.get_object(Bucket=user_input2, Key=file["Key"])
-                            obj_df = pd.read_csv(obj["Body"])
-                            df_list2.append(obj_df)
-
-                        df_n2 = pd.concat(df_list2)
-
-                        return df_n2
-
-
-                    df_n2 = get_data2()
-                    df_n2 = clean(df_n2)
-
-                    # changing from a frequency of data point per minute to the hourly average to enhance the user experience in the lineplots (individual devices only as there are no aggregate line plots)
-                    df_n2 = df_n2.groupby([df_n2.index.values.astype('<M8[h]')]).mean()
-
-                    day30_2 = df_n2[df_n2.index >= (most_recent_date - dt.timedelta(days=30))]
-
-                    def get_data3():
-                        s3 = boto3.client("s3", \
-                                          region_name="eu-west-2", \
-                                          aws_access_key_id="AKIA3C5IQYEMH7773L7F", \
-                                          aws_secret_access_key="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")
-
-                        response = s3.list_objects(Bucket=user_input3)
-
-                        df_list3 = []
-
-                        for file in response["Contents"]:
-                            obj = s3.get_object(Bucket=user_input3, Key=file["Key"])
-                            obj_df = pd.read_csv(obj["Body"])
-                            df_list3.append(obj_df)
-
-                        df_n3 = pd.concat(df_list3)
-
-                        return df_n3
-
-
-                    df_n3 = get_data3()
-                    df_n3 = clean(df_n3)
-
-                    # changing from a frequency of data point per minute to the hourly average to enhance the user experience in the lineplots (individual devices only as there are no aggregate line plots)
-                    df_n3 = df_n3.groupby([df_n3.index.values.astype('<M8[h]')]).mean()
-
-                    day30_3 = df_n3[df_n3.index >= (most_recent_date - dt.timedelta(days=30))]
-
-                    def get_data4():
-                        s3 = boto3.client("s3", \
-                                          region_name="eu-west-2", \
-                                          aws_access_key_id="AKIA3C5IQYEMH7773L7F", \
-                                          aws_secret_access_key="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")
-
-                        response = s3.list_objects(Bucket=user_input4)
-
-                        df_list4 = []
-
-                        for file in response["Contents"]:
-                            obj = s3.get_object(Bucket=user_input4, Key=file["Key"])
-                            obj_df = pd.read_csv(obj["Body"])
-                            df_list4.append(obj_df)
-
-                        df_n4 = pd.concat(df_list4)
-
-                        return df_n4
-
-                    df_n4 = get_data4()
-                    df_n4 = clean(df_n4)
-
-                    # changing from a frequency of data point per minute to the hourly average to enhance the user experience in the lineplots (individual devices only as there are no aggregate line plots)
-                    df_n4 = df_n4.groupby([df_n4.index.values.astype('<M8[h]')]).mean()
-
-                    day30_4 = df_n4[df_n4.index >= (most_recent_date - dt.timedelta(days=30))]
-
-                    compareline = go.Figure(data=[go.Scatter(
-                        name=user_input,
-                        x=day30.index, y=day30['Air Pressure'],
-                        marker_color='crimson'
-                        ), go.Scatter(
-                        name=user_input2,
-                        x=day30_2.index, y=day30_2['Air Pressure'],
-                        marker_color='darkblue'
-                        ), go.Scatter(
-                        name=user_input3,
-                        x=day30_3.index, y=day30_3['Air Pressure'],
-                        marker_color='magenta'
-                        ), go.Scatter(
-                        name=user_input4,
-                        x=day30_4.index, y=day30_4['Air Pressure'],
-                        marker_color='turquoise'
-                        )])
-
-            if number == '5':
-                if user_input5 != "":
                     def get_data2():
                         s3 = boto3.client("s3", \
                                           region_name="eu-west-2", \
@@ -681,7 +626,6 @@ if user_input != "":
 
                         return df_n4
 
-
                     df_n4 = get_data4()
                     df_n4 = clean(df_n4)
 
@@ -690,6 +634,129 @@ if user_input != "":
 
                     day30_4 = df_n4[df_n4.index >= (most_recent_date - dt.timedelta(days=30))]
 
+                    compareline = go.Figure(data=[go.Scatter(
+                        name=user_input,
+                        x=day30.index, y=day30['Air Pressure'],
+                        marker_color='crimson'
+                        ), go.Scatter(
+                        name=user_input2,
+                        x=day30_2.index, y=day30_2['Air Pressure'],
+                        marker_color='darkblue'
+                        ), go.Scatter(
+                        name=user_input3,
+                        x=day30_3.index, y=day30_3['Air Pressure'],
+                        marker_color='gold'
+                        ), go.Scatter(
+                        name=user_input4,
+                        x=day30_4.index, y=day30_4['Air Pressure'],
+                        marker_color='forestgreen'
+                        )])
+
+                    compareline.update_layout(
+                        autosize=False,
+                        width=800,
+                        height=520,
+                        title="Comparing Air Pressure of " + user_input + " and " + user_input2,
+                        xaxis_title="Time",
+                        yaxis_title="Air Pressure in hPa ",
+                        font=dict(
+                            family="Arial",
+                            size=14)
+                    )
+
+                    st.write('')
+
+                    row1_1, row1_2, row1_3 = st.beta_columns((0.75, 3, 0.75))
+
+                    with row1_2:
+                        st.plotly_chart(compareline)
+
+
+            if number == '5':
+                if user_input5 != "":
+                    def get_data2():
+                        s3 = boto3.client("s3", \
+                                          region_name="eu-west-2", \
+                                          aws_access_key_id="AKIA3C5IQYEMH7773L7F", \
+                                          aws_secret_access_key="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")
+
+                        response = s3.list_objects(Bucket=user_input2)
+
+                        df_list2 = []
+
+                        for file in response["Contents"]:
+                            obj = s3.get_object(Bucket=user_input2, Key=file["Key"])
+                            obj_df = pd.read_csv(obj["Body"])
+                            df_list2.append(obj_df)
+
+                        df_n2 = pd.concat(df_list2)
+
+                        return df_n2
+
+
+                    df_n2 = get_data2()
+                    df_n2 = clean(df_n2)
+
+                    # changing from a frequency of data point per minute to the hourly average to enhance the user experience in the lineplots (individual devices only as there are no aggregate line plots)
+                    df_n2 = df_n2.groupby([df_n2.index.values.astype('<M8[h]')]).mean()
+
+                    day30_2 = df_n2[df_n2.index >= (most_recent_date - dt.timedelta(days=30))]
+
+                    def get_data3():
+                        s3 = boto3.client("s3", \
+                                          region_name="eu-west-2", \
+                                          aws_access_key_id="AKIA3C5IQYEMH7773L7F", \
+                                          aws_secret_access_key="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")
+
+                        response = s3.list_objects(Bucket=user_input3)
+
+                        df_list3 = []
+
+                        for file in response["Contents"]:
+                            obj = s3.get_object(Bucket=user_input3, Key=file["Key"])
+                            obj_df = pd.read_csv(obj["Body"])
+                            df_list3.append(obj_df)
+
+                        df_n3 = pd.concat(df_list3)
+
+                        return df_n3
+
+
+                    df_n3 = get_data3()
+                    df_n3 = clean(df_n3)
+
+                    # changing from a frequency of data point per minute to the hourly average to enhance the user experience in the lineplots (individual devices only as there are no aggregate line plots)
+                    df_n3 = df_n3.groupby([df_n3.index.values.astype('<M8[h]')]).mean()
+
+                    day30_3 = df_n3[df_n3.index >= (most_recent_date - dt.timedelta(days=30))]
+
+                    def get_data4():
+                        s3 = boto3.client("s3", \
+                                          region_name="eu-west-2", \
+                                          aws_access_key_id="AKIA3C5IQYEMH7773L7F", \
+                                          aws_secret_access_key="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")
+
+                        response = s3.list_objects(Bucket=user_input4)
+
+                        df_list4 = []
+
+                        for file in response["Contents"]:
+                            obj = s3.get_object(Bucket=user_input4, Key=file["Key"])
+                            obj_df = pd.read_csv(obj["Body"])
+                            df_list4.append(obj_df)
+
+                        df_n4 = pd.concat(df_list4)
+
+                        return df_n4
+
+
+                    df_n4 = get_data4()
+                    df_n4 = clean(df_n4)
+
+                    # changing from a frequency of data point per minute to the hourly average to enhance the user experience in the lineplots (individual devices only as there are no aggregate line plots)
+                    df_n4 = df_n4.groupby([df_n4.index.values.astype('<M8[h]')]).mean()
+
+                    day30_4 = df_n4[df_n4.index >= (most_recent_date - dt.timedelta(days=30))]
 
                     def get_data5():
                         s3 = boto3.client("s3", \
@@ -706,7 +773,7 @@ if user_input != "":
                             obj_df = pd.read_csv(obj["Body"])
                             df_list5.append(obj_df)
 
-                        df_n4 = pd.concat(df_list5)
+                        df_n5 = pd.concat(df_list5)
 
                         return df_n5
 
@@ -714,7 +781,7 @@ if user_input != "":
                     df_n5 = clean(df_n5)
 
                     # changing from a frequency of data point per minute to the hourly average to enhance the user experience in the lineplots (individual devices only as there are no aggregate line plots)
-                    df_n5 = df_n5.groupby([df_n4.index.values.astype('<M8[h]')]).mean()
+                    df_n5 = df_n5.groupby([df_n5.index.values.astype('<M8[h]')]).mean()
 
                     day30_5 = df_n5[df_n5.index >= (most_recent_date - dt.timedelta(days=30))]
 
@@ -729,39 +796,38 @@ if user_input != "":
                     ), go.Scatter(
                         name=user_input3,
                         x=day30_3.index, y=day30_3['Air Pressure'],
-                        marker_color='magenta'
+                        marker_color='yellow'
                     ), go.Scatter(
                         name=user_input4,
                         x=day30_4.index, y=day30_4['Air Pressure'],
-                        marker_color='turquoise'
+                        marker_color='forestgreen'
                     ), go.Scatter(
                         name=user_input5,
                         x=day30_5.index, y=day30_5['Air Pressure'],
-                        marker_color='springgreen'
+                        marker_color='violet'
                     )])
 
-            if user_input2 != "":
-                compareline.update_layout(
-                        autosize=False,
-                        width=800,
-                        height=520,
-                        title="Comparing Air Pressure of " + user_input + " and " + user_input2,
-                        xaxis_title="Time",
-                        yaxis_title="Air Pressure in hPa ",
-                        font=dict(
-                            family="Arial",
-                            size=14)
-                    )
+                    compareline.update_layout(
+                            autosize=False,
+                            width=800,
+                            height=520,
+                            title="Comparing Air Pressure",
+                            xaxis_title="Time",
+                            yaxis_title="Air Pressure in hPa ",
+                            font=dict(
+                                family="Arial",
+                                size=14)
+                        )
 
-                    #plotting the compare line graph (needs to indent to active the if statement)
-                st.write('')
+                    st.write('')
 
-                row1_1, row1_2 = st.beta_columns(2)
+                    row1_1, row1_2, row1_3 = st.beta_columns((0.75, 3, 0.75))
 
-                with row1_1:
+                    with row1_2:
                         st.plotly_chart(compareline)
 
-# AQI DASHBOARD -------------------------------------------------------------------------------------------------
+
+    # AQI DASHBOARD -------------------------------------------------------------------------------------------------
 
     if option2 == 'AQI':
 
