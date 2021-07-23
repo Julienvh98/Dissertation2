@@ -2,7 +2,6 @@ gitdb~=4.0.7
 cffi~=1.14.5
 pillow~=8.2.0
 ipython~=7.22.0
-zlib~=1.2.11
 olefile~=0.46
 pip~=21.0.1
 wheel~=0.36.2
