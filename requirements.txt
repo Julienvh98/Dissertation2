@@ -69,7 +69,6 @@ terminado~=0.9.4
 et_xmlfile~=1.0.1
 defusedxml~=0.7.1
 idna~=2.10
-pandoc~=2.12
 pandocfilters~=1.4.3
 mistune~=0.8.4
 python~=3.8.8
