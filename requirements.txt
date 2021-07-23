@@ -6,7 +6,6 @@ zlib~=1.2.11
 olefile~=0.46
 pip~=21.0.1
 wheel~=0.36.2
-openssl~=1.1.1k
 cryptography~=3.4.7
 tornado~=6.1
 toolz~=0.11.1
