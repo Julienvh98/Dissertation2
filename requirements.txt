@@ -71,7 +71,6 @@ defusedxml~=0.7.1
 idna~=2.10
 pandocfilters~=1.4.3
 mistune~=0.8.4
-python~=3.8.8
 jupyterlab_pygments~=0.1.2
 pyparsing~=2.4.7
 pycparser~=2.20
