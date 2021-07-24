@@ -46,7 +46,7 @@ with col2:
 name_cols = st.beta_columns(3)
 
 #options in alphabetical order
-option2 = name_cols[0].selectbox("Which Metric?", ('ALL', 'Air Pressure', 'AQI', 'eC02','Humidity', 'PM1','PM2.5', 'PM10', 'Temperature', 'VOCs' ),6)
+option2 = name_cols[0].selectbox("Which Metric?", ('Air Pressure', 'AQI', 'eC02','Humidity', 'PM1','PM2.5', 'PM10', 'Temperature', 'VOCs' ),6)
 
 option = name_cols[1].selectbox("Which Dashboard?", ('Overview','Comparison', 'FAQ'),0)
 
@@ -246,7 +246,7 @@ if user_input != "":
                 st.image('https://i.ibb.co/T8887H7/air.png', width=35)
 
             with row1_3:
-                st.markdown('''Comp.Air samples taken in the last month: ''' + scount)
+                st.markdown('''Comp.Air samples taken of All devices in the last month: ''' + scount)
 
 
             #specifying the layout of the page
@@ -844,7 +844,18 @@ if user_input != "":
                 st.image('https://i.ibb.co/T8887H7/air.png', width=35)
 
             with row1_3:
-                st.markdown('''Comp.Air samples taken in the last month: ''' + scount)
+                st.markdown('''Comp.Air samples taken of All devices in the last month: ''' + scount)
+
+            about = st.beta_expander(
+                'Recommendations/Contextual Info')
+            with about:
+                '''
+                - Keep  rugs and carpet clean 
+                - Get indoor plants
+                - Clean your bathroom/kitchwn ducts,vents and filters.
+                
+                _Refer to FAQ for sources_
+                '''
 
             st.image('https://i.ibb.co/jLdDjTN/AQI.png')
             st.markdown(''' _Source: https://www.airnow.gov/_ ''')
@@ -1451,8 +1462,23 @@ if user_input != "":
                 st.image('https://i.ibb.co/T8887H7/air.png', width=35)
 
             with row1_3:
-                st.markdown('''Comp.Air samples taken in the last month: ''' + scount)
+                st.markdown('''Comp.Air samples taken of All devices in the last month: ''' + scount)
 
+            about = st.beta_expander(
+                'Recommendations/Contextual Info')
+
+            with about:
+                '''
+                - 1400 ppm will ensure good indoor air quality in most situations
+                - Above 1600 ppm indicates poor air quality
+                - Open windows 
+                - Limit open flames (fireplaces, candles)
+                - Incorporate plants
+                - Invest in an air purifier
+                - Increase airflow while cooking
+
+                _Refer to FAQ for sources_
+                '''
 
             #specifying the layout of the page each row is working as a container with spaces. The sizes of the containers and spaces are specified.
             st.write('')
@@ -2058,8 +2084,19 @@ if user_input != "":
                 st.image('https://i.ibb.co/T8887H7/air.png', width=35)
 
             with row1_3:
-                st.markdown('''Comp.Air samples taken in the last month: ''' + scount)
+                st.markdown('''Comp.Air samples taken of All devices in the last month: ''' + scount)
 
+            about = st.beta_expander(
+                'Recommendations/Contextual Info')
+
+            with about:
+                '''
+                - High temperatures can cause insufficient humidity
+                - High temperature and humidity levels can also increase concentrations of some pollutants
+                - A temperature of 19°C to 24°C helps you to prevent the drying of your nasal passage = less susceptible to viruses 
+                
+                _Refer to FAQ for sources_
+                '''
 
             #specifying the layout of the page each row is working as a container with spaces. The sizes of the containers and spaces are specified.
             st.write('')
@@ -2662,7 +2699,22 @@ if user_input != "":
                 st.image('https://i.ibb.co/T8887H7/air.png', width=35)
 
             with row1_3:
-                st.markdown('''Comp.Air samples taken in the last month: ''' + scount)
+                st.markdown('''Comp.Air samples taken of All devices in the last month: ''' + scount)
+
+            about = st.beta_expander(
+                'Recommendations/Contextual Info')
+
+            with about:
+                '''
+                - Humidity above 60% can lead to mould growth
+                - High temperature and humidity levels can also increase concentrations of some pollutants
+                - Mold spores, dust mites and other allergens survive best in high humidity environments
+                - Bacteria and viruses that cause respiratory infections thrive in extremely high and extremely low humidity
+                - To decrease humidity: use A/C, check for water leaks, get a Dehumidifier, open a window
+                - To increase humidity: warm showers, hang laundry inside
+               
+               _Refer to FAQ for sources_
+                '''
 
 
             #specifying the layout of the page each row is working as a container with spaces. The sizes of the containers and spaces are specified.
@@ -3269,7 +3321,22 @@ if user_input != "":
                 st.image('https://i.ibb.co/T8887H7/air.png', width=35)
 
             with row1_3:
-                st.markdown('''Comp.Air samples taken in the last month: ''' + scount)
+                st.markdown('''Comp.Air samples taken of All devices in the last month: ''' + scount)
+
+            about = st.beta_expander(
+                'Recommendations/Contextual Info')
+
+            with about:
+                '''
+                - Particulate Matter levels are mostly dependent on outdoor air quality
+                - Particulate Matter sources: engine combustion, industrial processes
+                - Monitor outdoor PM2.5 levels and open/close windows accordingly
+                - Purchase a air cleaner to reduce PM
+                - Avoid using anything that burns, such as wood fireplaces, gas logs and even candles or incense
+                - Avoid smoking indoors
+               
+               _Refer to FAQ for sources_
+                '''
 
 
             #specifying the layout of the page each row is working as a container with spaces. The sizes of the containers and spaces are specified.
@@ -3870,13 +3937,29 @@ if user_input != "":
             row1_1,space, row1_2, row1_3 = st.beta_columns((1.5,1,0.2,1))
 
             with row1_1:
-                st.markdown(''':books: * Definition *: atmospheric particulate matter (PM) that have a diameter of less than 1 micrometers (μm) .''')
+                st.markdown(''' :books: * Definition *: atmospheric particulate matter (PM) that have a diameter of less than 1 micrometers (μm) . ''')
+
 
             with row1_2:
                 st.image('https://i.ibb.co/T8887H7/air.png', width=35)
 
             with row1_3:
-                st.markdown('''Comp.Air samples taken in the last month: ''' + scount)
+                st.markdown('''Comp.Air samples taken of All devices in the last month: ''' + scount)
+
+            about = st.beta_expander(
+                'Recommendations/Contextual Info')
+
+            with about:
+                '''
+                - Particulate Matter levels are mostly dependent on outdoor air quality
+                - Particulate Matter sources: engine combustion, industrial processes
+                - Monitor outdoor PM2.5 levels and open/close windows accordingly
+                - Purchase a air cleaner to reduce PM
+                - Avoid using anything that burns, such as wood fireplaces, gas logs and even candles or incense
+                - Avoid smoking indoors
+               
+               _Refer to FAQ for sources_
+                '''
 
 
             #reformating the dataframe to be able to plot
@@ -4484,8 +4567,22 @@ if user_input != "":
                 st.image('https://i.ibb.co/T8887H7/air.png', width=35)
 
             with row1_3:
-                st.markdown('''Comp.Air samples taken in the last month: ''' + scount)
+                st.markdown('''Comp.Air samples taken of All devices in the last month: ''' + scount)
 
+            about = st.beta_expander(
+                'Recommendations/Contextual Info')
+
+            with about:
+                '''
+                - Particulate Matter levels are mostly dependent on outdoor air quality
+                - Particulate Matter sources: engine combustion, industrial processes
+                - Monitor outdoor PM2.5 levels and open/close windows accordingly
+                - Purchase a air cleaner to reduce PM
+                - Avoid using anything that burns, such as wood fireplaces, gas logs and even candles or incense
+                - Avoid smoking indoors
+                
+                _Refer to FAQ for sources_
+                '''
 
             #specifying the layout of the page each row is working as a container with spaces. The sizes of the containers and spaces are specified.
             st.write('')
@@ -5090,8 +5187,29 @@ if user_input != "":
                 st.image('https://i.ibb.co/T8887H7/air.png', width=35)
 
             with row1_3:
-                st.markdown('''Comp.Air samples taken in the last month: ''' + scount)
+                st.markdown('''Comp.Air samples taken of All devices in the last month: ''' + scount)
 
+            about = st.beta_expander(
+                'Recommendations/Contextual Info')
+
+            with about:
+                '''
+                To reduce levels:
+                
+                - Limit paints, paint strippers and other solvents
+                - Limit wood preservatives
+                - Limit aerosol sprays
+                - Limit cleansers and disinfectants
+                - Limit moth repellents and air fresheners
+                - Limit stored fuels and automotive products
+                - Limit dry-cleaned clothing
+                - Limit pesticide    
+                - Meet or exceed any label precautions
+                - Do not store opened containers of unused paints and similar materials
+                - Make sure you provide plenty of fresh air when using these the above products
+    
+                _Refer to FAQ for sources_
+                '''
 
             #specifying the layout of the page each row is working as a container with spaces. The sizes of the containers and spaces are specified.
             st.write('')
@@ -5693,9 +5811,9 @@ if option == "FAQ":
             
             **Air pressure**: also known as barometric pressure (after the barometer), is the pressure within the atmosphere of Earth. 
             
-            **AQI**: - an air quality index used by government agencies, the higher the AQI value, the greater the level of air pollution.
+            **AQI**: an air quality index used by government agencies, the higher the AQI value, the greater the level of air pollution.
 
-            **Humidity**: - a quantity representing the amount of water vapour in the atmosphere or in a gas.
+            **Humidity**: a quantity representing the amount of water vapour in the atmosphere or in a gas.
 
             **PM1**: atmospheric particulate matter (PM) that have a diameter of less than 1 micrometers (μm) .
             
@@ -5751,6 +5869,37 @@ if option == "FAQ":
         Supply voltage VDD: -0.3 to 5.5 V
         
         '''
+
+    st.markdown('___')
+    about = st.beta_expander(
+        'What are the sources for the recommendations in the Overview Dashboards?')
+    with about:
+        '''
+            **AQI**: 
+            - https://timesofindia.indiatimes.com/life-style/health-fitness/health-news/6-ways-to-improve-indoor-air-quality/photostory/79477493.cms
+            
+            **Humidity**: 
+            - https://www.epa.gov/mold/mold-course-chapter-2
+            - http://penoil.com/blog/indoor-air-quality-humidity/#:~:text=Bacteria%20and%20viruses%20that%20cause,may%20include%20ozone%20and%20formaldehyde.
+            - https://www.huskyair.com/blog/reducing-indoor-humidity/
+
+
+
+            **PM1, PM2.5 & PM10 **:
+            - https://www.airnow.gov/aqi/aqi-basics/extremely-high-levels-of-pm25/
+            - https://molekule.science/what-is-pm-2-5-and-how-can-you-reduce-your-exposure/
+
+            
+            **Temperature**:
+            - https://www.epa.gov/indoor-air-quality-iaq/introduction-indoor-air-quality
+            - https://www.advsolned.com/why-temperature-is-important-for-indoor-air-quality/
+            
+            **VOCs**:
+            - https://www.epa.gov/indoor-air-quality-iaq/volatile-organic-compounds-impact-indoor-air-quality
+
+        '''
+
+
 
 
 
