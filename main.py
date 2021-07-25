@@ -149,11 +149,11 @@ if user_input != "":
         st.header(option)
 
 # CLEANING DATA --------------------------------------------------------------------------------------------------------
-
-    @st.cache
     #caching the cleaning process to speed up the cleaning process,
     # getting the data was not cached because when cached streamlit
     # detects that an object returned by the get_data function is mutated outside of the get_data function.
+
+    @st.cache
     def clean(dataf):
 
 
@@ -5204,6 +5204,7 @@ if user_input != "":
                 - Limit stored fuels and automotive products
                 - Limit dry-cleaned clothing
                 - Limit pesticide    
+                - Limit personal care products (moisturisers, foundation etc.)
                 - Meet or exceed any label precautions
                 - Do not store opened containers of unused paints and similar materials
                 - Make sure you provide plenty of fresh air when using these the above products
