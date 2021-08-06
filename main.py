@@ -246,7 +246,7 @@ if user_input != "":
                 st.image('https://i.ibb.co/T8887H7/air.png', width=35)
 
             with row1_3:
-                st.markdown('''Comp.Air samples taken of All devices in the last month: ''' + scount)
+                st.markdown('''Comp.Air samples taken of all devices in the last month: ''' + scount)
 
 
             #specifying the layout of the page
@@ -844,7 +844,7 @@ if user_input != "":
                 st.image('https://i.ibb.co/T8887H7/air.png', width=35)
 
             with row1_3:
-                st.markdown('''Comp.Air samples taken of All devices in the last month: ''' + scount)
+                st.markdown('''Comp.Air samples taken of all devices in the last month: ''' + scount)
 
             about = st.beta_expander(
                 'Recommendations/Contextual Info')
@@ -1462,7 +1462,7 @@ if user_input != "":
                 st.image('https://i.ibb.co/T8887H7/air.png', width=35)
 
             with row1_3:
-                st.markdown('''Comp.Air samples taken of All devices in the last month: ''' + scount)
+                st.markdown('''Comp.Air samples taken of all devices in the last month: ''' + scount)
 
             about = st.beta_expander(
                 'Recommendations/Contextual Info')
@@ -2084,7 +2084,7 @@ if user_input != "":
                 st.image('https://i.ibb.co/T8887H7/air.png', width=35)
 
             with row1_3:
-                st.markdown('''Comp.Air samples taken of All devices in the last month: ''' + scount)
+                st.markdown('''Comp.Air samples taken of all devices in the last month: ''' + scount)
 
             about = st.beta_expander(
                 'Recommendations/Contextual Info')
@@ -2699,7 +2699,7 @@ if user_input != "":
                 st.image('https://i.ibb.co/T8887H7/air.png', width=35)
 
             with row1_3:
-                st.markdown('''Comp.Air samples taken of All devices in the last month: ''' + scount)
+                st.markdown('''Comp.Air samples taken of all devices in the last month: ''' + scount)
 
             about = st.beta_expander(
                 'Recommendations/Contextual Info')
@@ -3321,7 +3321,7 @@ if user_input != "":
                 st.image('https://i.ibb.co/T8887H7/air.png', width=35)
 
             with row1_3:
-                st.markdown('''Comp.Air samples taken of All devices in the last month: ''' + scount)
+                st.markdown('''Comp.Air samples taken of all devices in the last month: ''' + scount)
 
             about = st.beta_expander(
                 'Recommendations/Contextual Info')
@@ -3330,7 +3330,7 @@ if user_input != "":
                 '''
                 - Particulate Matter levels are mostly dependent on outdoor air quality
                 - Particulate Matter sources: engine combustion, industrial processes
-                - Monitor outdoor PM2.5 levels and open/close windows accordingly
+                - Monitor outdoor PM levels and open/close windows accordingly
                 - Purchase a air cleaner to reduce PM
                 - Avoid using anything that burns, such as wood fireplaces, gas logs and even candles or incense
                 - Avoid smoking indoors
@@ -3944,7 +3944,7 @@ if user_input != "":
                 st.image('https://i.ibb.co/T8887H7/air.png', width=35)
 
             with row1_3:
-                st.markdown('''Comp.Air samples taken of All devices in the last month: ''' + scount)
+                st.markdown('''Comp.Air samples taken of all devices in the last month: ''' + scount)
 
             about = st.beta_expander(
                 'Recommendations/Contextual Info')
@@ -3953,7 +3953,7 @@ if user_input != "":
                 '''
                 - Particulate Matter levels are mostly dependent on outdoor air quality
                 - Particulate Matter sources: engine combustion, industrial processes
-                - Monitor outdoor PM2.5 levels and open/close windows accordingly
+                - Monitor outdoor PM levels and open/close windows accordingly
                 - Purchase a air cleaner to reduce PM
                 - Avoid using anything that burns, such as wood fireplaces, gas logs and even candles or incense
                 - Avoid smoking indoors
@@ -4567,7 +4567,7 @@ if user_input != "":
                 st.image('https://i.ibb.co/T8887H7/air.png', width=35)
 
             with row1_3:
-                st.markdown('''Comp.Air samples taken of All devices in the last month: ''' + scount)
+                st.markdown('''Comp.Air samples taken of all devices in the last month: ''' + scount)
 
             about = st.beta_expander(
                 'Recommendations/Contextual Info')
@@ -4576,7 +4576,7 @@ if user_input != "":
                 '''
                 - Particulate Matter levels are mostly dependent on outdoor air quality
                 - Particulate Matter sources: engine combustion, industrial processes
-                - Monitor outdoor PM2.5 levels and open/close windows accordingly
+                - Monitor outdoor PM levels and open/close windows accordingly
                 - Purchase a air cleaner to reduce PM
                 - Avoid using anything that burns, such as wood fireplaces, gas logs and even candles or incense
                 - Avoid smoking indoors
@@ -5187,7 +5187,7 @@ if user_input != "":
                 st.image('https://i.ibb.co/T8887H7/air.png', width=35)
 
             with row1_3:
-                st.markdown('''Comp.Air samples taken of All devices in the last month: ''' + scount)
+                st.markdown('''Comp.Air samples taken of all devices in the last month: ''' + scount)
 
             about = st.beta_expander(
                 'Recommendations/Contextual Info')
