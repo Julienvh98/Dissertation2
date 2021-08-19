@@ -16,6 +16,7 @@ import boto3
 from botocore.exceptions import ClientError
 import io
 import scipy
+from datetime import date, timedelta
 
 from scipy import signal
 
@@ -167,9 +168,11 @@ if user_input != "":
         #concatenating the Date (in datetimeformat) and the Time(min) into one column
         dataf["Timestamp"] = pd.to_datetime(dataf["Date"].astype(str)+" "+dataf["Time(min)"].astype(str))
 
+        dataf["Cdate"] = dataf["Timestamp"] - timedelta(1)
+
         #setting this new column as the index
-        dataf = dataf.set_index("Timestamp")
-        dataf.sort_values("Timestamp", inplace=True)
+        dataf = dataf.set_index("Cdate")
+        dataf.sort_values("Cdate", inplace=True)
 
         #renaming cetain columns to facilitate the use of the input
         dataf.rename(columns={'Pm25': 'PM2.5', 'Pm1': 'PM1','Pm10': 'PM10' }, inplace=True)
@@ -181,8 +184,6 @@ if user_input != "":
     df_n = clean(df_n)
 
     df_1 = clean(df_1)
-
-
 
 # DATAFRAME TRANSFORMATION -----------------------------------------------------------------------------------
 
